@@ -1,43 +1,49 @@
-
-"""
-    Implements a simple cache proxy
-"""
-
+import os
+import time
 import socket
 from urllib.request import Request, urlopen, HTTPError
-import argparse
+
+"""
+    Cache proxy
+
+    This 
+    https://alexanderell.is/posts/simple-cache-server-in-python/
+"""
+
+import config
+
+# Index will keep track of the updated time of each cached file
+index = {}
+
+# Create an in memory storage in order to take advantage of the tree structure and performance
+try:
+    os.mkdir(config.cache.folder)
+except FileExistsError:
+    pass
 
 
 def main():
-    # Get port command line argument
-    parser = argparse.ArgumentParser()
-    parser.add_argument('port')
-    args = parser.parse_args()
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind((config.cache.host, int(config.cache.port)))
 
-    # Define socket host and port
-    SERVER_HOST = '0.0.0.0'
-    SERVER_PORT = int(args.port)
+    s.listen(1)
 
-    # Initialize socket
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket.bind((SERVER_HOST, SERVER_PORT))
-
-    server_socket.listen(1)
-
-    print('Cache proxy is listening on port %s ...' % SERVER_PORT)
+    print('Cache proxy is listening on port %s ...' % config.cache.port)
 
     while True:
         # Wait for client connection
-        client_connection, client_address = server_socket.accept()
+        client_connection, client_address = s.accept()
+        print("\n\n=====\nNew request:")
 
         # Get the client request
         request = client_connection.recv(1024).decode()
         print(request)
+        if not request:
+            continue
 
         # Parse HTTP headers
         headers = request.split('\n')
-
         top_header = headers[0].split()
         method = top_header[0]
         filename = top_header[1]
@@ -47,44 +53,75 @@ def main():
             filename = '/index.html'
 
         # Get the file
-        content = fetch_file(filename)
-
+        try:
+            content = fetch_file(filename)
+        except FileNotFoundError:
+            parts = filename.split('/')
+            parts = [ii for ii in filename.split('/') if ii]
+            n = len(parts)
+            print(parts)
+            for i in range(len(parts)-1):
+                newdir = os.path.join(config.cache.folder, *parts[:i+1])
+                print("creating new dir", newdir)
+                os.mkdir(newdir)
+            content = False
         # If we have the file, return it, otherwise 404
         if content:
-            response = 'HTTP/1.0 200 OK\n\n' + content
-        else:
-            response = 'HTTP/1.0 404 NOT FOUND\n\n File Not Found'
+            try:
+                response = 'HTTP/1.0 200 OK\n\n' + content.decode("utf-8")
+                response = response.encode()
+                print("   ... utf-8 content")
+            except AttributeError:
+                response = 'HTTP/1.0 200 OK\n\n' + content
+                response = response.encode()
+                print("   ... string content")
+            except UnicodeDecodeError:
+                response = content
+                print("   ... binary content")
 
+        else:
+            response = b'HTTP/1.0 404 NOT FOUND\n\n File Not Found'
+            print("  ... not found")
         # Send the response and close the connection
-        client_connection.sendall(response.encode())
+        client_connection.sendall(response)
         client_connection.close()
 
     # Close socket
-    server_socket.close()
+    s.close()
 
 
 def fetch_file(filename):
-    # Let's try to read the file locally first
-    file_from_cache = fetch_from_cache(filename)
+    """ Retrieve a file from cache or server
 
+    If a cached version exists and it is newer than now - config.cache.maxtime seconds, use it.
+    Otherwise fetch new version from the server.
+    """
+    file_from_cache = fetch_from_cache(filename)
     if file_from_cache:
-        print('Fetched successfully from cache.')
-        return file_from_cache
+        print('   cached')
+        if filename not in index:
+            print('        invalid cache')
+        elif index[filename] > time.time()-config.cache.maxtime:
+            print('        valid!')
+            return file_from_cache
+        else:
+            print('         expired.')
+            print(index[filename], time.time(), config.cache.maxtime)
     else:
         print('Not in cache. Fetching from server.')
-        file_from_server = fetch_from_server(filename)
-
-        if file_from_server:
-            save_in_cache(filename, file_from_server)
-            return file_from_server
-        else:
-            return None
+    file_from_server = fetch_from_server(filename)
+    if file_from_server:
+        save_in_cache(filename, file_from_server)
+        return file_from_server
+    else:
+        return None
 
 
 def fetch_from_cache(filename):
     try:
+        print("checking to see if "+filename+" is in cache")
         # Check if we have this file locally
-        fin = open('cache' + filename)
+        fin = open(config.cache.folder + filename, 'rb')
         content = fin.read()
         fin.close()
         # If we have it, let's send it
@@ -94,14 +131,15 @@ def fetch_from_cache(filename):
 
 
 def fetch_from_server(filename):
-    url = 'http://127.0.0.1:8000' + filename
+    url = 'http://{}:{}{}'.format(config.server.host, config.server.port, filename)
+    print(url)
     q = Request(url)
-
     try:
         response = urlopen(q)
         # Grab the header and content from the server req
         response_headers = response.info()
-        content = response.read().decode('utf-8')
+        print(response)
+        content = response.read()
         return content
     except HTTPError:
         return None
@@ -109,9 +147,11 @@ def fetch_from_server(filename):
 
 def save_in_cache(filename, content):
     print('Saving a copy of {} in the cache'.format(filename))
-    cached_file = open('cache' + filename, 'w')
+    cached_file = open(config.cache.folder + filename, 'wb')
     cached_file.write(content)
     cached_file.close()
+    index[filename] = time.time()
+    
 
 if __name__ == '__main__':
     main()

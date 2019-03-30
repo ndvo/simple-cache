@@ -2,7 +2,22 @@
 
 ## Cache server
 
-This is a simple cache server in python.  I wrote about it [here](https://alexanderellis.github.io/blog/posts/simple-cache-server-in-python/).
+This is a fork of Alexander Ellis https://github.com/AlexanderEllis simple cache server in python. 
+
+He wrote about it [here](https://alexanderellis.github.io/blog/posts/simple-cache-server-in-python/).
+
+## Fork features
+
+This fork is an exercise on building a Python cache server that should have the following features:
+1. Easy to configure and install
+1. Expiry time
+1. Distributed
+1. Resilient
+1. Geo distributed
+1. LRU
+1. Flexible schema
+
+## Core concept
 
 ![Fetching item from cache server, who fetches from main server](media/block-diagram-fetch-from-server.JPG)
 

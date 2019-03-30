@@ -19,7 +19,7 @@ This fork is an exercise on building a Python cache server that should have the 
 
 ## Core concept
 
-![Fetching item from cache server, who fetches from main server](media/block-diagram-fetch-from-server.JPG)
+![Fetching item from cache server, who fetches from main server](media/core-concept.png)
 
 Here are the steps for the first time an item is requested:
 
@@ -35,7 +35,7 @@ We could definitely swap 6 and 7, especially if we're trying to send the item ba
 
 Here's a diagram of a subsequent request for the same item:.
 
-![Fetching item from cache server, who has it locally](media/block-diagram-fetch-from-cache.JPG)
+![Fetching item from cache server, who has it locally](media/from-cache.png)
 
 Here are the steps for the future request:
 
@@ -48,7 +48,7 @@ Although it looks like the main server is lonely to the right, it didn't have to
 
 Here's another way of looking at the problem.  Here, the vertical axis is time increasing as you go down, and the horizontal arrows are the requests back and forth.  The same actions are taken in the same exact order, but the actions are separated vertically by when they happen:
 
-![Fetching item from cache server, timeline](media/caching-timeline.JPG)
+![Fetching item from cache server, timeline](media/over-time.png)
 
 ## Usage
 

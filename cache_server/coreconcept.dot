@@ -1,0 +1,6 @@
+digraph G {
+    Client [shape=box];
+    CacheServer [label="Cache Server"; shape=box];
+    CacheStorage [label="Cache Storage"; shape=box];
+    MainServer [label="Main Server"; shape=box];
+  }

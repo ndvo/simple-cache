@@ -52,18 +52,32 @@ Here's another way of looking at the problem.  Here, the vertical axis is time i
 
 ## Usage
 
-First, start the simple http server from the `main_server` directory:
-`python httpserver.py 8000`
+First, edit the config.py file to fit your needs. Set the host and port configurations appropriately.
 
-Then, start the cache proxy server in a separate terminal instance from the `cache_server` directory:
-`python cacheproxy.py 8001`
+Then, start your http server.
 
-Then, navigate or curl to `localhost:8001`.
+Then, start the cache proxy server:
+`python3 main.py`
+
+Then, navigate to appropriate URL and port.
 
 Result:
 ![Caching server in action](media/in-action.gif)
 
+## Distributed
 
-### References
-Thanks to joaoventura for the simple http server code!
+### Discussion
+
+One of the main features of the fork should be its distributed nature. The idea is to have several proxies distributed in different geographical regions in order to reduce latency.
+
+LinkedIn conducted experiments on using Anycast to lower latency and ended up using Regional Anycast for North America and Europe:
+https://engineering.linkedin.com/network-performance/tcp-over-ip-anycast-pipe-dream-or-reality
+
+Although it seems to be clear that a mixture of Anycast and DNS based Load Balancing would be ideal, this project's requirements were clear enough about using the geographically closest cache server to answer requests. This is not possible with Anycast that uses the lower hop count to choose the Point of Presence and it neither guarantees that it will be closest nor tries to accomplish this. Although we cannot guarantee to use the closest server with DNS Load balancing, we can at least try.
+
+
+![Fetching item from cache distributed cache servers, timeline](media/over-time-distributed.png)
+
+
+
 

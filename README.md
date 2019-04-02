@@ -19,7 +19,7 @@ This fork is an exercise on building a Python cache server that should have the 
 
 ## Core concept
 
-![Fetching item from cache server, who fetches from main server](media/block-diagram-fetch-from-server.JPG)
+![Fetching item from cache server, who fetches from main server](media/core-concept.png)
 
 Here are the steps for the first time an item is requested:
 
@@ -35,7 +35,7 @@ We could definitely swap 6 and 7, especially if we're trying to send the item ba
 
 Here's a diagram of a subsequent request for the same item:.
 
-![Fetching item from cache server, who has it locally](media/block-diagram-fetch-from-cache.JPG)
+![Fetching item from cache server, who has it locally](media/from-cache.png)
 
 Here are the steps for the future request:
 
@@ -48,22 +48,36 @@ Although it looks like the main server is lonely to the right, it didn't have to
 
 Here's another way of looking at the problem.  Here, the vertical axis is time increasing as you go down, and the horizontal arrows are the requests back and forth.  The same actions are taken in the same exact order, but the actions are separated vertically by when they happen:
 
-![Fetching item from cache server, timeline](media/caching-timeline.JPG)
+![Fetching item from cache server, timeline](media/over-time.png)
 
 ## Usage
 
-First, start the simple http server from the `main_server` directory:
-`python httpserver.py 8000`
+First, edit the config.py file to fit your needs. Set the host and port configurations appropriately.
 
-Then, start the cache proxy server in a separate terminal instance from the `cache_server` directory:
-`python cacheproxy.py 8001`
+Then, start your http server.
 
-Then, navigate or curl to `localhost:8001`.
+Then, start the cache proxy server:
+`python3 main.py`
+
+Then, navigate to appropriate URL and port.
 
 Result:
 ![Caching server in action](media/in-action.gif)
 
+## Distributed
 
-### References
-Thanks to joaoventura for the simple http server code!
+### Discussion
+
+One of the main features of the fork should be its distributed nature. The idea is to have several proxies distributed in different geographical regions in order to reduce latency.
+
+LinkedIn conducted experiments on using Anycast to lower latency and ended up using Regional Anycast for North America and Europe:
+https://engineering.linkedin.com/network-performance/tcp-over-ip-anycast-pipe-dream-or-reality
+
+Although it seems to be clear that a mixture of Anycast and DNS based Load Balancing would be ideal, this project's requirements were clear enough about using the geographically closest cache server to answer requests. This is not possible with Anycast that uses the lower hop count to choose the Point of Presence and it neither guarantees that it will be closest nor tries to accomplish this. Although we cannot guarantee to use the closest server with DNS Load balancing, we can at least try.
+
+
+![Fetching item from cache distributed cache servers, timeline](media/over-time-distributed.png)
+
+
+
 

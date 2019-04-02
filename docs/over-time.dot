@@ -1,0 +1,47 @@
+digraph G {
+  newrank=true;
+  
+  subgraph clusterClient{
+      label="Client";
+      request[label="Get /index.html"];
+      receiveResponse[label="receive"];
+      request2[label="Get /index.html"];
+      receiveResponse2[label="receive"];
+    }
+
+  subgraph clusterCache{
+      label="Cache";
+      check[label="Check if \nin cache"];
+      requestToServer[label="Get /index.html"];
+      receiveResponseFromServer[label="listen"];
+      store[label="Store in cache"];
+      sendToClient[label="200 OK"];
+      check2[label="Check if \nin cache"];
+      sendToClient2[label="200 OK"];
+    }
+
+  subgraph clusterMain{
+      label="Main Server";
+      receiveRequest[label="listen"];
+      response[label="200 OK"];
+    }
+
+
+  request->check->
+  requestToServer->receiveRequest->
+  response->receiveResponseFromServer->
+  store->
+  sendToClient->receiveResponse;
+  receiveResponse->request2[color=transparent];
+
+  request2->check2->sendToClient2->receiveResponse2;
+
+  {rank = same; request;check}
+  {rank = same; requestToServer;receiveRequest;}
+  {rank = same; response;receiveResponseFromServer;}
+  {rank = same; sendToClient;receiveResponse;}
+
+  {rank = same; request2; check2;}
+  {rank = same; sendToClient2; receiveResponse2;}
+
+  }

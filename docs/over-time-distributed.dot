@@ -1,0 +1,84 @@
+digraph G {
+  newrank=true;
+  
+  subgraph clusterClient{
+      label="Client";
+      request[label="Get /index.html"];
+      receiveResponse[label="receive"];
+      request2[label="Get /index.html"];
+      receiveResponse2[label="receive"];
+      request3[label="Get /index.html"];
+      receiveResponse3[label="receive"];
+    }
+
+  subgraph clusterLoadBalancer{
+     label="Load Balancer"
+     chooseCacheB[label="Chose Cache Server"];
+     chooseCacheB2[label="Chose Cache Server"];
+     chooseCacheC[label="Chose Cache Server"];
+    }
+
+  subgraph clusterCacheB{
+      label="Cache B";
+      checkB[label="Check: not in cache"];
+      requestToServer[label="Get /index.html"];
+      sendToClient[label="Sent to Client"];
+      process[label="Process"];
+      store[label="Store"];
+      broadcast[label="Broadcast"];
+      checkB2[label="Check: in cache"];
+      fromStorage[label="From Storage"];
+    }
+
+  subgraph clusterCacheA{
+      label="Cache A";
+      listenA[label="Listen to peer"];
+      
+    }
+  
+  subgraph clusterCacheC{
+      label="Cache C";
+      listenC[label="Listen to peer"];
+      checkC[label="Check: in cache"];
+      fromC[label="From Storage"];
+    }
+
+  subgraph clusterMain{
+      label="Main Server";
+      receiveRequest[label="listen"];
+      response[label="200 OK"];
+    }
+
+
+  request->chooseCacheB->checkB->
+  requestToServer->receiveRequest->
+  response->sendToClient->{
+    receiveResponse;
+    process;
+  }
+  process->{
+    store;
+    broadcast;
+    }
+  broadcast->{
+    listenA;
+    listenC;
+    }
+
+
+  receiveResponse->request2[style=invis; color=transparent];
+  store->checkB2[style=invis; color=transparent];
+  request2->chooseCacheB2->checkB2->fromStorage->receiveResponse2;
+  receiveResponse2->request3[style=invis; color=transparent];
+  request3->chooseCacheC->checkC;
+  checkC->fromC->receiveResponse3;
+  {rank=same; fromC; receiveResponse3;}
+  {rank=same; chooseCacheB; request; checkB;}
+  {rank=same; requestToServer; receiveRequest;}
+  {rank=same; response; sendToClient; receiveResponse;}
+  //{rank=same; request2; chooseCacheB2; checkB2; }
+  //{rank=same; fromStorage; receiveResponse2;}
+  {rank=same; request3; chooseCacheC; }
+  {rank=same; listenA; process;}
+
+}

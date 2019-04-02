@@ -1,0 +1,48 @@
+
+digraph G {
+  newrank=true;
+    Client [shape=box];
+    DNSLoadBalancing[shape=box];
+
+
+    subgraph clusterCacheA{
+      label="Cache Server A";
+      ProcessA[label="Process", shape=box];
+      IndexA[label="Index", shape=box];
+      StorageA[label="Storage", shape=box];
+    }
+    subgraph clusterCacheB{
+      label="Cache Server B";
+      ProcessB[label="Process", shape=box];
+      IndexB[label="Index", shape=box];
+      StorageB[label="Storage", shape=box];
+    }
+    subgraph clusterCacheC{
+      label="Cache Server C";
+      ProcessC[label="Process", shape=box];
+      IndexC[label="Index", shape=box];
+      StorageC[label="Storage", shape=box];
+    }
+
+
+    Client->DNSLoadBalancing[label=1];
+    DNSLoadBalancing->ProcessB[label=2];
+    ProcessB->IndexB[label=3];
+    IndexB->ProcessB[label=4];
+    ProcessB->MainServer[label=5];
+    MainServer->ProcessB[label=6];
+    ProcessB->{
+      Client;
+      IndexB;
+      StorageB;
+      ProcessA;
+      ProcessC
+      }[label=7];
+    ProcessA->{IndexA; StorageA}[label=8];
+    ProcessC->{IndexC; StorageC}[label=9]
+
+
+    {rank=same; ProcessA;  ProcessC}
+
+    MainServer[label="Main Server", shape=box];
+  }

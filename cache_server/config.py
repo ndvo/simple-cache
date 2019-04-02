@@ -6,6 +6,8 @@ cache.host = '0.0.0.0'
 cache.port = 3000
 cache.role = 'secondary'
 cache.folder = '/dev/shm/simplecache'
+cache.sync_port = 3333
+cache.queue_folder = '/dev/shm/simplecachequeue'
 # set the cache.maxtime in seconds
 # seconds * minutes * hours
 cache.maxtime = 60*3*1
